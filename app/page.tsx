@@ -1,65 +1,129 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function LandingPage() {
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleStart(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim() || !email.trim() || !consent) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), consentGiven: consent }),
+      });
+      if (!res.ok) throw new Error("Failed to start");
+      const { id } = await res.json();
+      localStorage.setItem("submissionId", id);
+      localStorage.setItem("participantName", name.trim());
+      router.push("/study/m1");
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="flex-1 flex flex-col items-center justify-center px-4 py-16">
+      <div className="w-full max-w-lg">
+        <div className="mb-10">
+          <p className="text-xs font-semibold tracking-widest uppercase text-stone-400 mb-3">
+            Research Study
+          </p>
+          <h1 className="text-3xl font-semibold text-stone-900 mb-4 leading-tight">
+            How do people make great decisions?
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-stone-600 leading-relaxed">
+            We&rsquo;re exploring the real process behind good decision-making — not the theory,
+            the lived experience. You&rsquo;ll answer five short video prompts at your own pace.
+            It takes about 15–20 minutes total.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="bg-white border border-stone-200 rounded-xl p-5 mb-8">
+          <p className="text-sm font-medium text-stone-700 mb-3">What to expect</p>
+          <ul className="space-y-2 text-sm text-stone-600">
+            {[
+              "Five short video prompts across different aspects of decision-making",
+              "Questions span any area of life — work, family, health, relationships",
+              "Record in your browser or upload a video from your device",
+              "No right answers — we want your real experience",
+            ].map((item) => (
+              <li key={item} className="flex gap-2">
+                <span className="text-stone-400 shrink-0">—</span>
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
-      </main>
-    </div>
+
+        <form onSubmit={handleStart} className="space-y-4">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-stone-700 mb-1">
+              Your name
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="First name is fine"
+              required
+              className="w-full rounded-lg border border-stone-300 px-3.5 py-2.5 text-sm placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-stone-700 mb-1">
+              Email address
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+              className="w-full rounded-lg border border-stone-300 px-3.5 py-2.5 text-sm placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900 focus:border-transparent"
+            />
+          </div>
+
+          <div className="bg-stone-100 rounded-lg p-4">
+            <label className="flex gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-0.5 shrink-0 w-4 h-4 accent-stone-900"
+              />
+              <span className="text-sm text-stone-600">
+                I understand my video responses will be stored securely and used only for this
+                research study. I can request deletion of my responses at any time by emailing
+                the researcher.
+              </span>
+            </label>
+          </div>
+
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
+          <button
+            type="submit"
+            disabled={!name.trim() || !email.trim() || !consent || loading}
+            className="w-full bg-stone-900 text-white rounded-lg py-3 px-4 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-stone-800 transition-colors"
+          >
+            {loading ? "Starting…" : "Begin the study →"}
+          </button>
+        </form>
+      </div>
+    </main>
   );
 }
