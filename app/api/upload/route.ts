@@ -13,6 +13,7 @@ async function storeVideo(file: File, path: string): Promise<string> {
     const blob = await put(path, buffer, {
       access: "public",
       addRandomSuffix: false,
+      allowOverwrite: true,
       contentType: file.type || "video/webm",
       token: process.env.BLOB_READ_WRITE_TOKEN,
     });

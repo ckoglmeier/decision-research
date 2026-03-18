@@ -70,6 +70,7 @@ async function blobSave(submission: Submission): Promise<void> {
   await put(`${SUBMISSION_PREFIX}${submission.id}.json`, body, {
     access: "public",
     addRandomSuffix: false,
+    allowOverwrite: true,
     contentType: "application/json",
     token: TOKEN,
   });
