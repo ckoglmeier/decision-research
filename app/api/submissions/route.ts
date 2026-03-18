@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ id: submission.id }, { status: 201 });
   } catch (err) {
     console.error("POST /api/submissions error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error", detail: String(err) }, { status: 500 });
   }
 }
 
@@ -62,6 +62,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("PATCH /api/submissions error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error", detail: String(err) }, { status: 500 });
   }
 }
