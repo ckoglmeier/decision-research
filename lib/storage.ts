@@ -1,6 +1,7 @@
 import type { Submission } from "./types";
 
 const USE_BLOB = !!process.env.BLOB_READ_WRITE_TOKEN;
+const TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
 const SUBMISSION_PREFIX = "submissions/";
 
 // ─── Local filesystem fallback (dev without Vercel Blob) ───────────────────
@@ -65,18 +66,22 @@ async function localDelete(id: string): Promise<void> {
 
 async function blobSave(submission: Submission): Promise<void> {
   const { put } = await import("@vercel/blob");
-  const json = JSON.stringify(submission, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  await put(`${SUBMISSION_PREFIX}${submission.id}.json`, blob, {
+  const body = Buffer.from(JSON.stringify(submission, null, 2));
+  await put(`${SUBMISSION_PREFIX}${submission.id}.json`, body, {
     access: "public",
     addRandomSuffix: false,
+    contentType: "application/json",
+    token: TOKEN,
   });
 }
 
 async function blobGet(id: string): Promise<Submission | null> {
   try {
     const { list } = await import("@vercel/blob");
-    const { blobs } = await list({ prefix: `${SUBMISSION_PREFIX}${id}.json` });
+    const { blobs } = await list({
+      prefix: `${SUBMISSION_PREFIX}${id}.json`,
+      token: TOKEN,
+    });
     if (blobs.length === 0) return null;
     const res = await fetch(blobs[0].url);
     if (!res.ok) return null;
@@ -88,7 +93,7 @@ async function blobGet(id: string): Promise<Submission | null> {
 
 async function blobList(): Promise<Submission[]> {
   const { list } = await import("@vercel/blob");
-  const { blobs } = await list({ prefix: SUBMISSION_PREFIX });
+  const { blobs } = await list({ prefix: SUBMISSION_PREFIX, token: TOKEN });
   const results = await Promise.all(
     blobs.map(async (blob) => {
       try {
@@ -107,8 +112,8 @@ async function blobList(): Promise<Submission[]> {
 
 async function blobDelete(id: string): Promise<void> {
   const { list, del } = await import("@vercel/blob");
-  const { blobs } = await list({ prefix: `${SUBMISSION_PREFIX}${id}.json` });
-  if (blobs.length > 0) await del(blobs[0].url);
+  const { blobs } = await list({ prefix: `${SUBMISSION_PREFIX}${id}.json`, token: TOKEN });
+  if (blobs.length > 0) await del(blobs[0].url, { token: TOKEN });
 }
 
 // ─── Public API ────────────────────────────────────────────────────────────

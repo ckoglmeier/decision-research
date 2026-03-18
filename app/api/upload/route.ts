@@ -9,7 +9,13 @@ const USE_BLOB = !!process.env.BLOB_READ_WRITE_TOKEN;
 async function storeVideo(file: File, path: string): Promise<string> {
   if (USE_BLOB) {
     const { put } = await import("@vercel/blob");
-    const blob = await put(path, file, { access: "public", addRandomSuffix: false });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const blob = await put(path, buffer, {
+      access: "public",
+      addRandomSuffix: false,
+      contentType: file.type || "video/webm",
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+    });
     return blob.url;
   }
 
