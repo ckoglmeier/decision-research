@@ -27,7 +27,7 @@ export default function ModulePage({ params }: { params: Promise<{ moduleId: str
     setCompletedModules(completed);
 
     const texts = JSON.parse(localStorage.getItem("moduleTexts") ?? "{}") as Record<string, string>;
-    if (texts[moduleId]) setTextResponse(texts[moduleId]);
+    setTextResponse(texts[moduleId] ?? "");
   }, [moduleId, router]);
 
   if (!module) {
