@@ -84,7 +84,7 @@ async function blobGet(id: string): Promise<Submission | null> {
       token: TOKEN,
     });
     if (blobs.length === 0) return null;
-    const res = await fetch(blobs[0].url);
+    const res = await fetch(blobs[0].url, { cache: "no-store" });
     if (!res.ok) return null;
     return (await res.json()) as Submission;
   } catch {
@@ -98,7 +98,7 @@ async function blobList(): Promise<Submission[]> {
   const results = await Promise.all(
     blobs.map(async (blob) => {
       try {
-        const res = await fetch(blob.url);
+        const res = await fetch(blob.url, { cache: "no-store" });
         if (!res.ok) return null;
         return (await res.json()) as Submission;
       } catch {
