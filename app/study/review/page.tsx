@@ -8,7 +8,6 @@ import { MODULES, MODULE_IDS, type ModuleId } from "@/lib/types";
 export default function ReviewPage() {
   const router = useRouter();
   const [completedModules, setCompletedModules] = useState<ModuleId[]>([]);
-  const [moduleUrls, setModuleUrls] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -16,9 +15,7 @@ export default function ReviewPage() {
     const id = localStorage.getItem("submissionId");
     if (!id) { router.replace("/"); return; }
     const completed = JSON.parse(localStorage.getItem("completedModules") ?? "[]") as ModuleId[];
-    const urls = JSON.parse(localStorage.getItem("moduleUrls") ?? "{}") as Record<string, string>;
     setCompletedModules(completed);
-    setModuleUrls(urls);
   }, [router]);
 
   async function handleSubmit() {
@@ -35,7 +32,7 @@ export default function ReviewPage() {
       if (!res.ok) throw new Error("Submit failed");
       // Clear local state
       localStorage.removeItem("completedModules");
-      localStorage.removeItem("moduleUrls");
+      localStorage.removeItem("moduleTexts");
       localStorage.removeItem("submissionId");
       localStorage.removeItem("participantName");
       router.push("/study/complete");
@@ -58,8 +55,8 @@ export default function ReviewPage() {
             You&rsquo;re almost done
           </h1>
           <p className="text-stone-500 text-sm">
-            You recorded {answeredCount} of {MODULE_IDS.length} modules.
-            {answeredCount < MODULE_IDS.length && " You can go back and record any you skipped, or submit now."}
+            You answered {answeredCount} of {MODULE_IDS.length} modules.
+            {answeredCount < MODULE_IDS.length && " You can go back and answer any you skipped, or submit now."}
           </p>
         </div>
 
@@ -67,7 +64,6 @@ export default function ReviewPage() {
         <div className="space-y-3">
           {MODULES.map((m, i) => {
             const done = completedModules.includes(m.id);
-            const url = moduleUrls[m.id];
             return (
               <div
                 key={m.id}
@@ -81,14 +77,14 @@ export default function ReviewPage() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-stone-800 truncate">{m.title}</p>
-                    {!done && <p className="text-xs text-stone-400">Not recorded</p>}
+                    {!done && <p className="text-xs text-stone-400">Not answered</p>}
                   </div>
                 </div>
                 <Link
                   href={`/study/${m.id}`}
                   className="text-xs text-stone-500 hover:text-stone-700 shrink-0 ml-4"
                 >
-                  {done ? "Edit" : "Record"}
+                  {done ? "Edit" : "Answer"}
                 </Link>
               </div>
             );
@@ -107,7 +103,7 @@ export default function ReviewPage() {
           </button>
           {answeredCount === 0 && (
             <p className="text-xs text-center text-stone-400">
-              Record at least one module to submit.
+              Answer at least one module to submit.
             </p>
           )}
         </div>

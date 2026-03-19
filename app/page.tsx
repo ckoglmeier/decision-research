@@ -45,7 +45,7 @@ export default function LandingPage() {
           </h1>
           <p className="text-stone-600 leading-relaxed">
             We&rsquo;re exploring the real process behind good decision-making — not the theory,
-            the lived experience. You&rsquo;ll answer five short video prompts at your own pace.
+            the lived experience. You&rsquo;ll answer five short written prompts at your own pace.
             It takes about 15–20 minutes total.
           </p>
         </div>
@@ -54,9 +54,9 @@ export default function LandingPage() {
           <p className="text-sm font-medium text-stone-700 mb-3">What to expect</p>
           <ul className="space-y-2 text-sm text-stone-600">
             {[
-              "Five short video prompts across different aspects of decision-making",
+              "Five written prompts across different aspects of decision-making",
               "Questions span any area of life — work, family, health, relationships",
-              "Record in your browser or upload a video from your device",
+              "Write as much or as little as feels right for each prompt",
               "No right answers — we want your real experience",
             ].map((item) => (
               <li key={item} className="flex gap-2">
@@ -106,7 +106,7 @@ export default function LandingPage() {
                 className="mt-0.5 shrink-0 w-4 h-4 accent-stone-900"
               />
               <span className="text-sm text-stone-600">
-                I understand my video responses will be stored securely and used only for this
+                I understand my written responses will be stored securely and used only for this
                 research study. I can request deletion of my responses at any time by emailing
                 the researcher.
               </span>

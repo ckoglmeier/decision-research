@@ -3,10 +3,7 @@
 import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MODULES, MODULE_IDS, type ModuleId } from "@/lib/types";
-import VideoRecorder from "@/components/VideoRecorder";
 import ProgressBar from "@/components/ProgressBar";
-
-type InputMode = "video" | "text";
 
 export default function ModulePage({ params }: { params: Promise<{ moduleId: string }> }) {
   const { moduleId } = use(params);
@@ -17,13 +14,9 @@ export default function ModulePage({ params }: { params: Promise<{ moduleId: str
 
   const [submissionId, setSubmissionId] = useState("");
   const [completedModules, setCompletedModules] = useState<ModuleId[]>([]);
-  const [inputMode, setInputMode] = useState<InputMode>("video");
-  const [pendingFile, setPendingFile] = useState<{ blob: Blob; name: string } | null>(null);
   const [textResponse, setTextResponse] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [existingUrl, setExistingUrl] = useState("");
-  const [existingText, setExistingText] = useState("");
 
   useEffect(() => {
     const id = localStorage.getItem("submissionId");
@@ -33,11 +26,8 @@ export default function ModulePage({ params }: { params: Promise<{ moduleId: str
     const completed = JSON.parse(localStorage.getItem("completedModules") ?? "[]") as ModuleId[];
     setCompletedModules(completed);
 
-    const urls = JSON.parse(localStorage.getItem("moduleUrls") ?? "{}") as Record<string, string>;
-    if (urls[moduleId]) setExistingUrl(urls[moduleId]);
-
     const texts = JSON.parse(localStorage.getItem("moduleTexts") ?? "{}") as Record<string, string>;
-    if (texts[moduleId]) { setExistingText(texts[moduleId]); setTextResponse(texts[moduleId]); setInputMode("text"); }
+    if (texts[moduleId]) setTextResponse(texts[moduleId]);
   }, [moduleId, router]);
 
   if (!module) {
@@ -55,12 +45,10 @@ export default function ModulePage({ params }: { params: Promise<{ moduleId: str
   }
 
   async function handleNext() {
-    const hasNewVideo = !!pendingFile;
-    const hasNewText = inputMode === "text" && textResponse.trim().length > 0;
-    const hasExisting = isCompleted;
+    const hasNewText = textResponse.trim().length > 0;
 
-    if (!hasNewVideo && !hasNewText && !hasExisting) {
-      setSaveError("Please record a video or write a response before continuing.");
+    if (!hasNewText && !isCompleted) {
+      setSaveError("Please write a response before continuing.");
       return;
     }
 
@@ -68,19 +56,7 @@ export default function ModulePage({ params }: { params: Promise<{ moduleId: str
     setSaveError("");
 
     try {
-      if (hasNewVideo) {
-        const formData = new FormData();
-        formData.append("file", pendingFile!.blob, pendingFile!.name);
-        formData.append("submissionId", submissionId);
-        formData.append("moduleId", moduleId);
-        const res = await fetch("/api/upload", { method: "POST", body: formData });
-        if (!res.ok) throw new Error("Upload failed");
-        const { url } = await res.json();
-        const urls = JSON.parse(localStorage.getItem("moduleUrls") ?? "{}");
-        urls[moduleId] = url;
-        localStorage.setItem("moduleUrls", JSON.stringify(urls));
-        markCompleted();
-      } else if (hasNewText) {
+      if (hasNewText) {
         const res = await fetch("/api/submissions", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -133,48 +109,16 @@ export default function ModulePage({ params }: { params: Promise<{ moduleId: str
           </ul>
         </div>
 
-        {/* Mode toggle */}
-        <div className="flex rounded-lg border border-stone-200 overflow-hidden text-sm font-medium">
-          <button
-            onClick={() => { setInputMode("video"); setSaveError(""); }}
-            className={`flex-1 py-2.5 transition-colors ${
-              inputMode === "video"
-                ? "bg-stone-900 text-white"
-                : "bg-white text-stone-500 hover:bg-stone-50"
-            }`}
-          >
-            Record a video
-          </button>
-          <button
-            onClick={() => { setInputMode("text"); setSaveError(""); }}
-            className={`flex-1 py-2.5 transition-colors ${
-              inputMode === "text"
-                ? "bg-stone-900 text-white"
-                : "bg-white text-stone-500 hover:bg-stone-50"
-            }`}
-          >
-            Write a response
-          </button>
-        </div>
-
-        {/* Input area */}
-        {inputMode === "video" ? (
-          <VideoRecorder
-            onRecorded={(blob, name) => { setPendingFile({ blob, name }); setSaveError(""); }}
-            existingUrl={existingUrl}
+        <div className="space-y-2">
+          <textarea
+            value={textResponse}
+            onChange={(e) => { setTextResponse(e.target.value); setSaveError(""); }}
+            placeholder="Write your response here…"
+            rows={10}
+            className="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 leading-relaxed focus:outline-none focus:ring-2 focus:ring-stone-900 resize-none"
           />
-        ) : (
-          <div className="space-y-2">
-            <textarea
-              value={textResponse}
-              onChange={(e) => { setTextResponse(e.target.value); setSaveError(""); }}
-              placeholder="Write your response here…"
-              rows={8}
-              className="w-full rounded-xl border border-stone-300 px-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 leading-relaxed focus:outline-none focus:ring-2 focus:ring-stone-900 resize-none"
-            />
-            <p className="text-xs text-stone-400 text-right">{textResponse.length} characters</p>
-          </div>
-        )}
+          <p className="text-xs text-stone-400 text-right">{textResponse.length} characters</p>
+        </div>
 
         {saveError && <p className="text-sm text-red-600">{saveError}</p>}
 
@@ -185,7 +129,7 @@ export default function ModulePage({ params }: { params: Promise<{ moduleId: str
             className="w-full bg-stone-900 text-white rounded-lg py-3 text-sm font-medium disabled:opacity-40 hover:bg-stone-800 transition-colors"
           >
             {saving
-              ? inputMode === "video" ? "Uploading…" : "Saving…"
+              ? "Saving…"
               : isLastModule ? "Continue to review →" : `Continue to module ${moduleIndex + 2} →`}
           </button>
           {!isCompleted && (

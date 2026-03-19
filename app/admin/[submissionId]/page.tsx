@@ -71,11 +71,11 @@ export default function SubmissionPage({ params }: { params: Promise<{ submissio
           </span>
         </div>
         <p className="text-sm text-stone-500 mt-3">
-          {answeredModules.length} of {MODULE_IDS.length} modules recorded
+          {answeredModules.length} of {MODULE_IDS.length} modules answered
         </p>
       </div>
 
-      {/* Module videos */}
+      {/* Module responses */}
       <div className="space-y-6">
         {MODULES.map((m, i) => {
           const response = submission.responses[m.id];
@@ -98,13 +98,6 @@ export default function SubmissionPage({ params }: { params: Promise<{ submissio
                 <div className="rounded-xl border border-stone-200 bg-white px-5 py-4 text-sm text-stone-800 leading-relaxed whitespace-pre-wrap">
                   {response.text}
                 </div>
-              ) : response?.blobUrl ? (
-                <video
-                  src={response.blobUrl}
-                  controls
-                  className="w-full rounded-xl bg-black"
-                  style={{ maxHeight: 400 }}
-                />
               ) : (
                 <div className="rounded-xl border-2 border-dashed border-stone-200 py-8 text-center text-sm text-stone-400">
                   Not answered
@@ -113,7 +106,7 @@ export default function SubmissionPage({ params }: { params: Promise<{ submissio
 
               {response && (
                 <p className="text-xs text-stone-400">
-                  {response.text ? "Written" : "Uploaded"}{" "}
+                  Written{" "}
                   {new Date(response.uploadedAt).toLocaleString("en-US", {
                     month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
                   })}
