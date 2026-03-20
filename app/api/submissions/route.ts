@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { saveSubmission, getSubmission } from "@/lib/storage";
-import type { Submission } from "@/lib/types";
+import { saveSubmission, getSubmission, saveResponse } from "@/lib/storage";
+import { MODULE_IDS } from "@/lib/types";
+import type { Submission, ModuleId } from "@/lib/types";
 
 // POST /api/submissions — create a new in-progress submission
 export async function POST(req: NextRequest) {
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PATCH /api/submissions — mark as submitted, or save a text response for a module
+// PATCH /api/submissions — save a module text response, or mark as submitted
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json();
@@ -40,24 +41,27 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Missing id" }, { status: 400 });
     }
 
-    const submission = await getSubmission(id);
-    if (!submission) {
-      return NextResponse.json({ error: "Submission not found" }, { status: 404 });
-    }
-
     if (moduleId && typeof text === "string") {
-      // Save text response for a specific module
-      submission.responses[moduleId as import("@/lib/types").ModuleId] = {
+      // Validate moduleId before touching any storage
+      if (!MODULE_IDS.includes(moduleId as ModuleId)) {
+        return NextResponse.json({ error: "Invalid moduleId" }, { status: 400 });
+      }
+
+      // Save response directly to its own file — no read-modify-write
+      await saveResponse(id, moduleId as ModuleId, {
         text,
         uploadedAt: new Date().toISOString(),
-      };
+      });
     } else {
-      // Mark the whole submission as submitted
+      // Mark the whole submission as submitted — must read meta to update status
+      const submission = await getSubmission(id);
+      if (!submission) {
+        return NextResponse.json({ error: "Submission not found" }, { status: 404 });
+      }
       submission.status = "submitted";
+      submission.updatedAt = new Date().toISOString();
+      await saveSubmission(submission);
     }
-
-    submission.updatedAt = new Date().toISOString();
-    await saveSubmission(submission);
 
     return NextResponse.json({ ok: true });
   } catch (err) {
